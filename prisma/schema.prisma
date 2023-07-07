@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Nonce {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createTxSig String
+  nonceValue  String
+  privateKey  String
+  deleteTxSig String?
+  isActive    Boolean      @default(true)
+  Transaction Transaction?
+}
+
+model Transaction {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  signedTx       String
+  recipient      String
+  isProcessed    Boolean @default(false)
+  durableNonce   Nonce   @relation(fields: [durableNonceId], references: [id])
+  durableNonceId String  @unique @db.ObjectId
+}
