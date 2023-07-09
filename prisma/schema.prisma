@@ -15,8 +15,9 @@ model Nonce {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createTxSig String
-  nonceValue  String
+  createTxSig String       @unique
+  nonceValue  String       @unique
+  publicKey   String       @unique
   privateKey  String
   deleteTxSig String?
   isActive    Boolean      @default(true)
