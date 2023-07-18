@@ -1,8 +1,15 @@
 import { Router } from "express";
 
 import prismaClient from "config/prisma";
+import amqplib from "amqplib";
 
 const transactionRouter = Router();
+
+// add to queue
+const queue = "txs";
+const conn = await amqplib.connect(
+  "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp",
+);
 
 transactionRouter.get("/all", async (_req, res) => {
   const transactions = await prismaClient.transaction.findMany({
@@ -139,6 +146,17 @@ transactionRouter.post("/", async (req, res) => {
       },
     },
   });
+
+  const sendCh = await conn.createChannel();
+  await sendCh.assertQueue(queue, {
+    durable: true,
+  });
+
+  sendCh.sendToQueue(
+    queue,
+    Buffer.from(JSON.stringify(unprocessedTransaction)),
+  );
+  await sendCh.close();
 
   return res.status(200).json({
     message: "Transaction created",
