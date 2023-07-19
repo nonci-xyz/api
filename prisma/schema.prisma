@@ -34,4 +34,5 @@ model Transaction {
   isProcessed    Boolean @default(false)
   durableNonce   Nonce   @relation(fields: [durableNonceId], references: [id])
   durableNonceId String  @unique @db.ObjectId
+  signature      String?
 }

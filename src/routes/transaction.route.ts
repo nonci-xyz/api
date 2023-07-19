@@ -5,12 +5,6 @@ import amqplib from "amqplib";
 
 const transactionRouter = Router();
 
-// add to queue
-const queue = "txs";
-const conn = await amqplib.connect(
-  "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp",
-);
-
 transactionRouter.get("/all", async (_req, res) => {
   const transactions = await prismaClient.transaction.findMany({
     select: {
@@ -145,7 +139,15 @@ transactionRouter.post("/", async (req, res) => {
         },
       },
     },
+    include: {
+      durableNonce: true,
+    },
   });
+
+  const queue = "txs";
+  const conn = await amqplib.connect(
+    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
+  );
 
   const sendCh = await conn.createChannel();
   await sendCh.assertQueue(queue, {
@@ -154,7 +156,7 @@ transactionRouter.post("/", async (req, res) => {
 
   sendCh.sendToQueue(
     queue,
-    Buffer.from(JSON.stringify(unprocessedTransaction)),
+    Buffer.from(JSON.stringify(unprocessedTransaction))
   );
   await sendCh.close();
 
