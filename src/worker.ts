@@ -1,5 +1,5 @@
 import { Connection, Keypair, Transaction } from "@solana/web3.js";
-import amqplib, { ConsumeMessage } from "amqplib";
+import amqplib from "amqplib";
 import bs58 from "bs58";
 import config from "config";
 import prismaClient from "config/prisma";
@@ -7,9 +7,7 @@ import prismaClient from "config/prisma";
 const queue = "txs";
 
 export const worker = async () => {
-  const conn = await amqplib.connect(
-    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
-  );
+  const conn = await amqplib.connect(config.amqpUrl);
 
   const channel = await conn.createChannel();
 

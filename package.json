@@ -12,7 +12,8 @@
     "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:express --external:cors",
     "start": "node dist/index.js",
     "type-check": "tsc",
-    "db:push": "prisma db push "
+    "db:push": "prisma db push",
+    "start:setup": "node --loader ts-node/esm ./scripts/setup.ts"
   },
   "keywords": [],
   "author": "",

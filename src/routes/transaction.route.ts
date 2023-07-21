@@ -154,9 +154,7 @@ transactionRouter.post("/", async (req, res) => {
   });
 
   const queue = "txs";
-  const conn = await amqplib.connect(
-    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
-  );
+  const conn = await amqplib.connect(config.amqpUrl);
 
   const sendCh = await conn.createChannel();
   await sendCh.assertQueue(queue, {
