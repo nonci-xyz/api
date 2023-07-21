@@ -5,6 +5,7 @@ import { errorHandler } from "middlewares/errorHandler";
 import logger from "middlewares/logger";
 import cookieParser from "cookie-parser";
 import transactionRouter from "@routes/transaction.route";
+import { worker } from "worker";
 
 const app: Express = express();
 
@@ -13,7 +14,7 @@ app.use(
     // origin is given a array if we want to have multiple origins later
     origin: "*",
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -34,7 +35,8 @@ app.all("*", (req, res) => {
 
 app.use(errorHandler);
 
-const server = app.listen(4000, () => {
+const server = app.listen(4000, async () => {
+  await worker();
   logger.log("info", `Server is running on Port: 4000`);
 });
 

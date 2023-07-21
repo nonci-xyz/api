@@ -146,7 +146,7 @@ transactionRouter.post("/", async (req, res) => {
 
   const queue = "txs";
   const conn = await amqplib.connect(
-    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
+    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp",
   );
 
   const sendCh = await conn.createChannel();
@@ -156,9 +156,10 @@ transactionRouter.post("/", async (req, res) => {
 
   sendCh.sendToQueue(
     queue,
-    Buffer.from(JSON.stringify(unprocessedTransaction))
+    Buffer.from(JSON.stringify(unprocessedTransaction)),
   );
   await sendCh.close();
+  await conn.close();
 
   return res.status(200).json({
     message: "Transaction created",

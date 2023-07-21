@@ -1,14 +1,14 @@
 import { Connection, Keypair, Transaction } from "@solana/web3.js";
-import amqplib from "amqplib";
+import amqplib, { ConsumeMessage } from "amqplib";
 import bs58 from "bs58";
 import config from "config";
 import prismaClient from "config/prisma";
 
 const queue = "txs";
 
-const main = async () => {
+export const worker = async () => {
   const conn = await amqplib.connect(
-    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
+    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp",
   );
 
   const channel = await conn.createChannel();
@@ -22,9 +22,8 @@ const main = async () => {
     await conn.close();
   });
 
-  await channel.consume(
-    queue,
-    async (message) => {
+  try {
+    await channel.consume(queue, async (message) => {
       const txItem = JSON.parse(message!.content.toString());
       console.log("txItem", txItem);
       // const vaultKeypair = Keypair.fromSecretKey(
@@ -62,9 +61,8 @@ const main = async () => {
       });
 
       channel.ack(message!);
-    },
-    { noAck: true }
-  );
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
-
-main().catch(console.error);
