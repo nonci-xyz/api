@@ -8,7 +8,7 @@ const queue = "txs";
 
 export const worker = async () => {
   const conn = await amqplib.connect(
-    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp",
+    "amqps://ozcptnqp:WmlvgTauAdyX1nQ1sXl_cSFxx5Dgm-vw@puffin.rmq2.cloudamqp.com/ozcptnqp"
   );
 
   const channel = await conn.createChannel();
@@ -22,28 +22,30 @@ export const worker = async () => {
     await conn.close();
   });
 
-  try {
-    await channel.consume(queue, async (message) => {
+  await channel.consume(queue, async (message) => {
+    try {
       const txItem = JSON.parse(message!.content.toString());
       console.log("txItem", txItem);
-      // const vaultKeypair = Keypair.fromSecretKey(
-      //   bs58.decode(config.vaultPrivateKey)
-      // );
+      const vaultKeypair = Keypair.fromSecretKey(
+        bs58.decode(config.vaultPrivateKey)
+      );
 
-      // const transaction = Transaction.from(txItem.signedTx);
+      const transaction = Transaction.from(
+        Buffer.from(txItem.signedTx, "base64")
+      );
 
-      // const connection = new Connection(config.rpc, "confirmed");
+      const connection = new Connection(config.rpc, "confirmed");
 
-      // transaction.recentBlockhash = txItem.durableNonce.nonceValue;
-      // transaction.feePayer = vaultKeypair.publicKey;
+      transaction.recentBlockhash = txItem.durableNonce.nonceValue;
+      transaction.feePayer = vaultKeypair.publicKey;
 
-      // const signature = await connection.sendTransaction(transaction, [
-      //   vaultKeypair,
-      // ]);
+      const signature = await connection.sendTransaction(transaction, [
+        vaultKeypair,
+      ]);
 
-      // await connection.confirmTransaction(signature);
+      await connection.confirmTransaction(signature);
 
-      // console.log("sig", signature);
+      console.log("sig", signature);
 
       await prismaClient.transaction.update({
         where: {
@@ -61,8 +63,10 @@ export const worker = async () => {
       });
 
       channel.ack(message!);
-    });
-  } catch (err) {
-    console.log(err);
-  }
+    } catch (err) {
+      console.log(err);
+
+      // TODO: add it to end of queue, also can we have a way to track that if fails more than thrice, mark it as failed
+    }
+  });
 };

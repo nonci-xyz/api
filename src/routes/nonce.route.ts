@@ -157,7 +157,7 @@ nonceRouter.get("/value/:value", async (req, res) => {
 // create a durable nonce account
 nonceRouter.get("/create", async (_req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey),
+    bs58.decode(config.vaultPrivateKey)
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -170,17 +170,17 @@ nonceRouter.get("/create", async (_req, res) => {
         fromPubkey: vaultKeypair.publicKey,
         newAccountPubkey: nonceKeypair.publicKey,
         lamports: await connection.getMinimumBalanceForRentExemption(
-          NONCE_ACCOUNT_LENGTH,
+          NONCE_ACCOUNT_LENGTH
         ),
         space: NONCE_ACCOUNT_LENGTH,
         programId: SystemProgram.programId,
-      }),
+      })
     )
     .add(
       SystemProgram.nonceInitialize({
         noncePubkey: nonceKeypair.publicKey,
         authorizedPubkey: vaultKeypair.publicKey,
-      }),
+      })
     );
 
   const signature = await connection.sendTransaction(tx, [
