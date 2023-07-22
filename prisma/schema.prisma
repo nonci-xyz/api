@@ -21,6 +21,7 @@ model Nonce {
   privateKey  String
   deleteTxSig String?
   isActive    Boolean      @default(true)
+  isDeleted   Boolean      @default(false)
   Transaction Transaction?
 }
 

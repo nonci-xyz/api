@@ -264,12 +264,86 @@ nonceRouter.delete("/delete/:id", async (req, res) => {
     },
     data: {
       deleteTxSig: signature,
+      isDeleted: true,
     },
   });
 
   return res.status(200).json({
     message: "Nonce deleted successfully",
     signature: signature,
+  });
+});
+
+nonceRouter.delete("/all-used", async (_req, res) => {
+  const vaultKeypair = Keypair.fromSecretKey(
+    bs58.decode(config.vaultPrivateKey)
+  );
+
+  const connection = new Connection(config.rpc, "confirmed");
+
+  const usedNonceDatas = await prismaClient.nonce.findMany({
+    where: {
+      isActive: true,
+      isDeleted: false,
+    },
+  });
+
+  if (!usedNonceDatas) {
+    return res.status(404).json({
+      message: "no used nonces found",
+    });
+  }
+
+  // break into batches of 5
+
+  const batches = [];
+  const batchSize = 5;
+  for (let i = 0; i < usedNonceDatas.length; i += batchSize) {
+    batches.push(usedNonceDatas.slice(i, i + batchSize));
+  }
+
+  for (const batch of batches) {
+    const tx = new Transaction();
+    for (const nonceData of batch) {
+      const accountInfo = await connection.getAccountInfo(
+        new PublicKey(nonceData.publicKey)
+      );
+      if (!accountInfo) {
+        return res.status(500).json({
+          message: "nonce account not found",
+        });
+      }
+
+      tx.add(
+        SystemProgram.nonceWithdraw({
+          authorizedPubkey: vaultKeypair.publicKey,
+          toPubkey: vaultKeypair.publicKey,
+          noncePubkey: new PublicKey(nonceData.publicKey),
+          lamports: accountInfo.lamports,
+        })
+      );
+    }
+
+    const signature = await connection.sendTransaction(tx, [vaultKeypair]);
+
+    await connection.confirmTransaction(signature);
+
+    for (const nonceData of batch) {
+      await prismaClient.nonce.update({
+        where: {
+          id: nonceData.id,
+        },
+        data: {
+          deleteTxSig: signature,
+          isDeleted: true,
+        },
+      });
+    }
+  }
+
+  return res.status(200).json({
+    message: "All used nonces deleted successfully",
+    number: usedNonceDatas.length,
   });
 });
 
