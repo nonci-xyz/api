@@ -6,6 +6,7 @@ import {
   Connection,
   NONCE_ACCOUNT_LENGTH,
   NonceAccount,
+  PublicKey,
 } from "@solana/web3.js";
 import bs58 from "bs58";
 
@@ -213,6 +214,62 @@ nonceRouter.get("/create", async (_req, res) => {
     signature: signature,
     nonceValue: nonceAccount.nonce,
     nonceAccountPublicKey: nonceKeypair.publicKey.toBase58(),
+  });
+});
+
+nonceRouter.delete("/delete/:id", async (req, res) => {
+  const vaultKeypair = Keypair.fromSecretKey(
+    bs58.decode(config.vaultPrivateKey)
+  );
+
+  const connection = new Connection(config.rpc, "confirmed");
+
+  const nonceData = await prismaClient.nonce.findUnique({
+    where: {
+      id: req.params.id,
+    },
+  });
+
+  if (!nonceData) {
+    return res.status(404).json({
+      message: "nonce not found",
+    });
+  }
+
+  const accountInfo = await connection.getAccountInfo(
+    new PublicKey(nonceData.publicKey)
+  );
+  if (!accountInfo) {
+    return res.status(500).json({
+      message: "nonce account not found",
+    });
+  }
+
+  const tx = new Transaction().add(
+    SystemProgram.nonceWithdraw({
+      authorizedPubkey: vaultKeypair.publicKey,
+      toPubkey: vaultKeypair.publicKey,
+      noncePubkey: new PublicKey(nonceData.publicKey),
+      lamports: accountInfo.lamports,
+    })
+  );
+
+  const signature = await connection.sendTransaction(tx, [vaultKeypair]);
+
+  await connection.confirmTransaction(signature);
+
+  await prismaClient.nonce.update({
+    where: {
+      id: req.params.id,
+    },
+    data: {
+      deleteTxSig: signature,
+    },
+  });
+
+  return res.status(200).json({
+    message: "Nonce deleted successfully",
+    signature: signature,
   });
 });
 

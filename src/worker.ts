@@ -51,7 +51,7 @@ export const worker = async () => {
         },
         data: {
           isProcessed: true,
-          signature: "huehue",
+          signature: signature,
           durableNonce: {
             update: {
               isActive: false,
