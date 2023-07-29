@@ -11,6 +11,7 @@ import {
 } from "@solana/web3.js";
 import config from "config";
 import bs58 from "bs58";
+import { authHandler } from "middlewares/auth";
 
 const transactionRouter = Router();
 
@@ -121,7 +122,7 @@ transactionRouter.get("/recipient/:recipient", async (req, res) => {
   });
 });
 
-transactionRouter.post("/", async (req, res) => {
+transactionRouter.post("/", authHandler, async (req, res) => {
   const { body } = req;
 
   if (!body) {
@@ -163,7 +164,7 @@ transactionRouter.post("/", async (req, res) => {
 
   sendCh.sendToQueue(
     queue,
-    Buffer.from(JSON.stringify(unprocessedTransaction))
+    Buffer.from(JSON.stringify(unprocessedTransaction)),
   );
   await sendCh.close();
   await conn.close();
@@ -206,7 +207,7 @@ transactionRouter.post("/random-with-nonce", async (req, res) => {
       fromPubkey: new PublicKey(config.vaultPublicKey),
       toPubkey: new PublicKey("8Dyk53RrtmN3MshQxxWdfTRco9sQJzUHSqkUg8chbe88"),
       lamports: LAMPORTS_PER_SOL / 1000,
-    })
+    }),
   );
 
   tx.recentBlockhash = nonce.nonceValue;

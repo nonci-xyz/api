@@ -7,7 +7,5 @@ export const errorHandler = (
   res: Response,
 ): void => {
   logger.error(err.message);
-  console.log("yo");
-
   res.status(500).json({ message: err.message.toString() });
 };

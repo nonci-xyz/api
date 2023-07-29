@@ -12,6 +12,7 @@ import bs58 from "bs58";
 
 import config from "config";
 import prismaClient from "config/prisma";
+import { authHandler } from "middlewares/auth";
 
 const nonceRouter = Router();
 
@@ -156,9 +157,9 @@ nonceRouter.get("/value/:value", async (req, res) => {
 });
 
 // create a durable nonce account
-nonceRouter.get("/create", async (_req, res) => {
+nonceRouter.get("/create", authHandler, async (_req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey)
+    bs58.decode(config.vaultPrivateKey),
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -171,17 +172,17 @@ nonceRouter.get("/create", async (_req, res) => {
         fromPubkey: vaultKeypair.publicKey,
         newAccountPubkey: nonceKeypair.publicKey,
         lamports: await connection.getMinimumBalanceForRentExemption(
-          NONCE_ACCOUNT_LENGTH
+          NONCE_ACCOUNT_LENGTH,
         ),
         space: NONCE_ACCOUNT_LENGTH,
         programId: SystemProgram.programId,
-      })
+      }),
     )
     .add(
       SystemProgram.nonceInitialize({
         noncePubkey: nonceKeypair.publicKey,
         authorizedPubkey: vaultKeypair.publicKey,
-      })
+      }),
     );
 
   const signature = await connection.sendTransaction(tx, [
@@ -217,9 +218,9 @@ nonceRouter.get("/create", async (_req, res) => {
   });
 });
 
-nonceRouter.delete("/delete/:id", async (req, res) => {
+nonceRouter.delete("/delete/:id", authHandler, async (req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey)
+    bs58.decode(config.vaultPrivateKey),
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -237,7 +238,7 @@ nonceRouter.delete("/delete/:id", async (req, res) => {
   }
 
   const accountInfo = await connection.getAccountInfo(
-    new PublicKey(nonceData.publicKey)
+    new PublicKey(nonceData.publicKey),
   );
   if (!accountInfo) {
     return res.status(500).json({
@@ -251,7 +252,7 @@ nonceRouter.delete("/delete/:id", async (req, res) => {
       toPubkey: vaultKeypair.publicKey,
       noncePubkey: new PublicKey(nonceData.publicKey),
       lamports: accountInfo.lamports,
-    })
+    }),
   );
 
   const signature = await connection.sendTransaction(tx, [vaultKeypair]);
@@ -274,9 +275,9 @@ nonceRouter.delete("/delete/:id", async (req, res) => {
   });
 });
 
-nonceRouter.delete("/all-used", async (_req, res) => {
+nonceRouter.delete("/all-used", authHandler, async (_req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey)
+    bs58.decode(config.vaultPrivateKey),
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -306,7 +307,7 @@ nonceRouter.delete("/all-used", async (_req, res) => {
     const tx = new Transaction();
     for (const nonceData of batch) {
       const accountInfo = await connection.getAccountInfo(
-        new PublicKey(nonceData.publicKey)
+        new PublicKey(nonceData.publicKey),
       );
       if (!accountInfo) {
         return res.status(500).json({
@@ -320,7 +321,7 @@ nonceRouter.delete("/all-used", async (_req, res) => {
           toPubkey: vaultKeypair.publicKey,
           noncePubkey: new PublicKey(nonceData.publicKey),
           lamports: accountInfo.lamports,
-        })
+        }),
       );
     }
 
