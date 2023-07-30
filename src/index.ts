@@ -35,17 +35,7 @@ app.all("*", (req, res) => {
 
 app.use(errorHandler);
 
-const server = app.listen(3000, async () => {
+app.listen(3000, async () => {
   await worker();
   logger.log("info", `Server is running on Port: 3000`);
-});
-
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM signal received.");
-  logger.info("Closing server.");
-  server.close((err) => {
-    logger.info("Server closed.");
-    // eslint-disable-next-line no-process-exit
-    process.exit(err ? 1 : 0);
-  });
 });

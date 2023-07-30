@@ -7,7 +7,7 @@ export const authHandler = (
   next: NextFunction,
 ) => {
   if (req.headers.authorization?.split(" ")[1] === config.secret) {
-    next();
+    return next();
   } else {
     return new Error("Unauthorized to use the route");
   }

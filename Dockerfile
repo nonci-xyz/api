@@ -3,13 +3,10 @@ FROM node:16
 WORKDIR /app
 COPY . .
 
-RUN rm -rf .env
-
 RUN yarn install
-RUN yarn run start:setup
-
-
 RUN yarn run build
+
+RUN rm -rf /app/.env
 
 EXPOSE 3000
 CMD ["yarn", "start"]
