@@ -20,7 +20,7 @@ RPC="https://api.mainnet-beta.solana.com" # Solana Mainnet, replace with your pr
 # RPC="https://api.devnet.solana.com" # Solana Devnet, ideal for testing and development
 # RPC="http://localhost:8899" # Local Solana node, ideal for testing and development
 DATABASE_URL="" # Create a new MongoDB database and add the connection string here
-AMQP_URL="" # Create a new CloudAMQP instance and add the connection string here
+AMQP_URL="" # Create a new RabbitMQ instance and add the connection string here
 `;
 
 fs.writeFileSync(

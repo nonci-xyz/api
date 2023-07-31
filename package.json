@@ -6,11 +6,9 @@
   "scripts": {
     "test": "cross-env NODE_ENV=test jest",
     "lint": "npx eslint .",
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:worker\" --names \"API,WORKER\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\" --kill-others --success first",
-    "dev:worker": "tsx watch src/worker.ts --clear-screen-false",
-    "dev:api": "tsx watch src/index.ts --clear-screen=false",
+    "dev": "tsx watch src/index.ts --clear-screen=false",
     "build": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:express --external:cors",
-    "start": "node dist/index.js",
+    "start": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js --external:express --external:cors && node dist/index.js",
     "type-check": "tsc",
     "db:push": "prisma db push",
     "start:setup": "node --loader ts-node/esm ./scripts/setup.ts"
