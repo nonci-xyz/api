@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  db:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+
+  rabbitmq:
+    image: "rabbitmq:3.11.9-management-alpine"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  api:
+    build: .
+    depends_on:
+      - rabbitmq
+      - db
+    restart: unless-stopped
+    env_file: .env
+    stdin_open: true
+    tty: true
+    ports:
+      - "3000:3000"
+
+volumes:
+  mongo_data: {}

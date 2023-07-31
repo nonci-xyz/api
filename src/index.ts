@@ -35,9 +35,9 @@ app.all("*", (req, res) => {
 
 app.use(errorHandler);
 
-const server = app.listen(4000, async () => {
+const server = app.listen(3000, async () => {
   await worker();
-  logger.log("info", `Server is running on Port: 4000`);
+  logger.log("info", `Server is running on Port: 3000`);
 });
 
 process.on("SIGTERM", () => {
