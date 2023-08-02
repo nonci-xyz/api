@@ -11,6 +11,7 @@ const envSchema = Joi.object().keys({
   RPC: Joi.string().optional(),
   SECRET: Joi.string().required(),
   AMQP_URL: Joi.string().required(),
+  PORT: Joi.number().default(3000),
 });
 
 const { value: validatedEnv, error } = envSchema
@@ -31,6 +32,7 @@ const config = {
   rpc: validatedEnv.RPC,
   secret: validatedEnv.SECRET,
   amqpUrl: validatedEnv.AMQP_URL,
+  port: validatedEnv.PORT,
 } as const;
 
 export default config;

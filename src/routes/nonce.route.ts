@@ -16,150 +16,140 @@ import { authHandler } from "middlewares/auth";
 
 const nonceRouter = Router();
 
-nonceRouter.get("/all", async (_req, res) => {
-  const nonces = await prismaClient.nonce.findMany({
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      Transaction: true,
-    },
-  });
+nonceRouter.get("/", async (req, res) => {
+  const { id, publicKey, value, status } = req.query;
 
-  res.status(200).json({
-    message: "Fetched all nonces",
-    nonces,
-  });
-});
+  if (id) {
+    const nonce = await prismaClient.nonce.findUnique({
+      where: {
+        id: id as string,
+      },
+      select: {
+        id: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        createTxSig: true,
+        deleteTxSig: true,
+        nonceValue: true,
+        publicKey: true,
+        Transaction: true,
+      },
+    });
 
-nonceRouter.get("/active", async (_req, res) => {
-  const nonces = await prismaClient.nonce.findMany({
-    where: {
-      isActive: true,
-    },
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      publicKey: true,
-      Transaction: true,
-    },
-  });
+    if (!nonce) {
+      return res.status(404).json({
+        message: "Nonce not found",
+      });
+    }
 
-  res.status(200).json({
-    message: "Fetched all active nonces",
-    nonces,
-  });
-});
+    return res.status(200).json({
+      message: "Fetched nonce",
+      nonce,
+    });
+  } else if (publicKey) {
+    const nonce = await prismaClient.nonce.findUnique({
+      where: {
+        publicKey: publicKey as string,
+      },
+      select: {
+        id: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        createTxSig: true,
+        deleteTxSig: true,
+        nonceValue: true,
+        publicKey: true,
+        Transaction: true,
+      },
+    });
 
-nonceRouter.get("/used", async (_req, res) => {
-  const nonces = await prismaClient.nonce.findMany({
-    where: {
-      isActive: false,
-    },
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      publicKey: true,
-      Transaction: true,
-    },
-  });
+    if (!nonce) {
+      return res.status(404).json({
+        message: "Nonce not found",
+      });
+    }
 
-  res.status(200).json({
-    message: "Fetched all used nonces",
-    nonces,
-  });
-});
+    return res.status(200).json({
+      message: "Fetched nonce",
+      nonce,
+    });
+  } else if (value) {
+    const nonce = await prismaClient.nonce.findUnique({
+      where: {
+        nonceValue: value as string,
+      },
+      select: {
+        id: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        createTxSig: true,
+        deleteTxSig: true,
+        nonceValue: true,
+        publicKey: true,
+        Transaction: true,
+      },
+    });
 
-nonceRouter.get("/id/:id", async (req, res) => {
-  const nonce = await prismaClient.nonce.findUnique({
-    where: {
-      id: req.params.id,
-    },
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      publicKey: true,
-      Transaction: true,
-    },
-  });
+    if (!nonce) {
+      return res.status(404).json({
+        message: "Nonce not found",
+      });
+    }
 
-  return res.status(200).json({
-    message: "Fetched nonce",
-    nonce,
-  });
-});
+    return res.status(200).json({
+      message: "Fetched nonce",
+      nonce,
+    });
+  } else if (status) {
+    const nonces = await prismaClient.nonce.findMany({
+      where: {
+        isActive: status === "active" ? true : false,
+      },
+      select: {
+        id: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        createTxSig: true,
+        deleteTxSig: true,
+        nonceValue: true,
+        publicKey: true,
+        Transaction: true,
+      },
+    });
 
-nonceRouter.get("/publicKey/:publicKey", async (req, res) => {
-  const nonce = await prismaClient.nonce.findUnique({
-    where: {
-      publicKey: req.params.publicKey,
-    },
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      publicKey: true,
-      Transaction: true,
-    },
-  });
+    return res.status(200).json({
+      message: `Fetched all ${status} nonces`,
+      nonces,
+    });
+  } else {
+    const nonces = await prismaClient.nonce.findMany({
+      select: {
+        id: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        createTxSig: true,
+        deleteTxSig: true,
+        nonceValue: true,
+        Transaction: true,
+      },
+    });
 
-  return res.status(200).json({
-    message: "Fetched nonce",
-    nonce,
-  });
-});
-
-nonceRouter.get("/value/:value", async (req, res) => {
-  const nonce = await prismaClient.nonce.findUnique({
-    where: {
-      nonceValue: req.params.value,
-    },
-    select: {
-      id: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-      createTxSig: true,
-      deleteTxSig: true,
-      nonceValue: true,
-      publicKey: true,
-      Transaction: true,
-    },
-  });
-
-  return res.status(200).json({
-    message: "Fetched nonce",
-    nonce,
-  });
+    return res.status(200).json({
+      message: "Fetched all nonces",
+      nonces,
+    });
+  }
 });
 
 // create a durable nonce account
-nonceRouter.get("/create", authHandler, async (_req, res) => {
+nonceRouter.post("/", authHandler, async (_req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey),
+    bs58.decode(config.vaultPrivateKey)
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -172,17 +162,17 @@ nonceRouter.get("/create", authHandler, async (_req, res) => {
         fromPubkey: vaultKeypair.publicKey,
         newAccountPubkey: nonceKeypair.publicKey,
         lamports: await connection.getMinimumBalanceForRentExemption(
-          NONCE_ACCOUNT_LENGTH,
+          NONCE_ACCOUNT_LENGTH
         ),
         space: NONCE_ACCOUNT_LENGTH,
         programId: SystemProgram.programId,
-      }),
+      })
     )
     .add(
       SystemProgram.nonceInitialize({
         noncePubkey: nonceKeypair.publicKey,
         authorizedPubkey: vaultKeypair.publicKey,
-      }),
+      })
     );
 
   const signature = await connection.sendTransaction(tx, [
@@ -220,7 +210,7 @@ nonceRouter.get("/create", authHandler, async (_req, res) => {
 
 nonceRouter.delete("/delete/:id", authHandler, async (req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey),
+    bs58.decode(config.vaultPrivateKey)
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -238,7 +228,7 @@ nonceRouter.delete("/delete/:id", authHandler, async (req, res) => {
   }
 
   const accountInfo = await connection.getAccountInfo(
-    new PublicKey(nonceData.publicKey),
+    new PublicKey(nonceData.publicKey)
   );
   if (!accountInfo) {
     return res.status(500).json({
@@ -252,7 +242,7 @@ nonceRouter.delete("/delete/:id", authHandler, async (req, res) => {
       toPubkey: vaultKeypair.publicKey,
       noncePubkey: new PublicKey(nonceData.publicKey),
       lamports: accountInfo.lamports,
-    }),
+    })
   );
 
   const signature = await connection.sendTransaction(tx, [vaultKeypair]);
@@ -277,7 +267,7 @@ nonceRouter.delete("/delete/:id", authHandler, async (req, res) => {
 
 nonceRouter.delete("/all-used", authHandler, async (_req, res) => {
   const vaultKeypair = Keypair.fromSecretKey(
-    bs58.decode(config.vaultPrivateKey),
+    bs58.decode(config.vaultPrivateKey)
   );
 
   const connection = new Connection(config.rpc, "confirmed");
@@ -307,7 +297,7 @@ nonceRouter.delete("/all-used", authHandler, async (_req, res) => {
     const tx = new Transaction();
     for (const nonceData of batch) {
       const accountInfo = await connection.getAccountInfo(
-        new PublicKey(nonceData.publicKey),
+        new PublicKey(nonceData.publicKey)
       );
       if (!accountInfo) {
         return res.status(500).json({
@@ -321,7 +311,7 @@ nonceRouter.delete("/all-used", authHandler, async (_req, res) => {
           toPubkey: vaultKeypair.publicKey,
           noncePubkey: new PublicKey(nonceData.publicKey),
           lamports: accountInfo.lamports,
-        }),
+        })
       );
     }
 

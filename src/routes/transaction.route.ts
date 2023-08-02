@@ -15,111 +15,50 @@ import { authHandler } from "middlewares/auth";
 
 const transactionRouter = Router();
 
-transactionRouter.get("/all", async (_req, res) => {
-  const transactions = await prismaClient.transaction.findMany({
-    select: {
-      id: true,
-      recipient: true,
-      signedTx: true,
-      durableNonce: true,
-      isProcessed: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+transactionRouter.get("/", async (req, res) => {
+  const { status, id, recipient } = req.query;
 
-  res.status(200).json({
-    message: "Fetched all transactions",
-    transactions,
-  });
-});
+  if (id) {
+    const transaction = await prismaClient.transaction.findUnique({
+      where: {
+        id: id as string,
+      },
+    });
 
-transactionRouter.get("/pending", async (_req, res) => {
-  const transactions = await prismaClient.transaction.findMany({
-    where: {
-      isProcessed: false,
-    },
-    select: {
-      id: true,
-      recipient: true,
-      signedTx: true,
-      durableNonce: true,
-      isProcessed: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+    return res.status(200).json({
+      message: "Fetched transaction",
+      transaction,
+    });
+  } else if (recipient) {
+    const transactions = await prismaClient.transaction.findMany({
+      where: {
+        recipient: recipient as string,
+      },
+    });
 
-  return res.status(200).json({
-    message: "Fetched all pending transactions",
-    transactions,
-  });
-});
+    return res.status(200).json({
+      message: "Fetched transactions",
+      transactions,
+    });
+  } else if (status) {
+    const transactions = await prismaClient.transaction.findMany({
+      where: {
+        isProcessed: status === "processed",
+      },
+    });
 
-transactionRouter.get("/processed", async (_req, res) => {
-  const transactions = await prismaClient.transaction.findMany({
-    where: {
-      isProcessed: true,
-    },
-    select: {
-      id: true,
-      recipient: true,
-      signedTx: true,
-      durableNonce: true,
-      isProcessed: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+    return res.status(200).json({
+      message: "Fetched transactions",
+      transactions,
+    });
+  } else {
+    const transactions = await prismaClient.transaction.findMany();
 
-  return res.status(200).json({
-    message: "Fetched all processed transactions",
-    transactions,
-  });
-});
-
-transactionRouter.get("/id/:id", async (req, res) => {
-  const transaction = await prismaClient.transaction.findUnique({
-    where: {
-      id: req.params.id,
-    },
-    select: {
-      id: true,
-      recipient: true,
-      signedTx: true,
-      durableNonce: true,
-      isProcessed: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  return res.status(200).json({
-    message: "Fetched transaction",
-    transaction,
-  });
-});
-
-transactionRouter.get("/recipient/:recipient", async (req, res) => {
-  const transactions = await prismaClient.transaction.findMany({
-    where: {
-      recipient: req.params.recipient,
-    },
-    select: {
-      id: true,
-      recipient: true,
-      signedTx: true,
-      durableNonce: true,
-      isProcessed: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  return res.status(200).json({
-    message: "Fetched transactions",
-    transactions,
-  });
+    return res.status(200).json({
+      message: "Fetched transactions",
+      transactions,
+    });
+  }
 });
 
 transactionRouter.post("/", authHandler, async (req, res) => {
@@ -164,7 +103,7 @@ transactionRouter.post("/", authHandler, async (req, res) => {
 
   sendCh.sendToQueue(
     queue,
-    Buffer.from(JSON.stringify(unprocessedTransaction)),
+    Buffer.from(JSON.stringify(unprocessedTransaction))
   );
   await sendCh.close();
   await conn.close();
@@ -175,7 +114,7 @@ transactionRouter.post("/", authHandler, async (req, res) => {
   });
 });
 
-transactionRouter.post("/random-with-nonce", async (req, res) => {
+transactionRouter.post("/random-with-nonce", authHandler, async (req, res) => {
   const { body } = req;
 
   if (!body) {
@@ -207,7 +146,7 @@ transactionRouter.post("/random-with-nonce", async (req, res) => {
       fromPubkey: new PublicKey(config.vaultPublicKey),
       toPubkey: new PublicKey("8Dyk53RrtmN3MshQxxWdfTRco9sQJzUHSqkUg8chbe88"),
       lamports: LAMPORTS_PER_SOL / 1000,
-    }),
+    })
   );
 
   tx.recentBlockhash = nonce.nonceValue;
